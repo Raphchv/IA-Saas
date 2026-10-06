@@ -15,15 +15,15 @@ if errorlevel 1 (
   goto fin
 )
 
-if not exist node_modules (
-  echo  [1/4] Installation des composants, 1 a 3 minutes la premiere fois...
+echo  [1/4] Configuration...
+call node scripts/setup.mjs
+if errorlevel 1 goto erreur
+
+if not exist src\generated\prisma\client.ts (
+  echo  [2/4] Installation des composants, 1 a 3 minutes la premiere fois...
   call npm install
   if errorlevel 1 goto erreur
 )
-
-echo  [2/4] Configuration...
-call node scripts/setup.mjs
-if errorlevel 1 goto erreur
 
 echo  [3/4] Preparation de la base de donnees...
 call npx prisma migrate deploy
