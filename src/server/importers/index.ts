@@ -19,7 +19,7 @@ export function parseArchive(zip: Uint8Array): ParsedArchive {
   const parser = parsers.find((p) => p.canParse(files));
   if (!parser) {
     throw new ImportError(
-      "Format non reconnu. Dépose le fichier ZIP tel que reçu de ChatGPT (il doit contenir conversations.json).",
+      "Format non reconnu. Déposez le fichier ZIP tel que reçu de ChatGPT (il doit contenir conversations.json).",
     );
   }
   return { parser, ...parser.parse(files) };

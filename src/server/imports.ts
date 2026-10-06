@@ -19,7 +19,7 @@ export async function getImport(userId: string, importId: string) {
   if (found && isStale(found)) {
     return db.import.update({
       where: { id: found.id },
-      data: { status: "FAILED", error: "L'import a été interrompu. Réessaie." },
+      data: { status: "FAILED", error: "L'import a été interrompu. Veuillez réessayer." },
     });
   }
   return found;

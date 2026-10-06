@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
+/* Couleurs sémantiques : on écrit `bg-surface`, `text-muted`, `border-line`…
+   et le mode sombre suit automatiquement les préférences du système. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --bg: #fbfbfc;
+  --surface: #ffffff;
+  --subtle: #f3f4f6;
+  --line: #e6e7eb;
+  --fg: #111318;
+  --muted: #6b7080;
+  --accent: #5b5bd6;
+  --accent-hover: #4b4bc4;
+  --accent-soft: #eeeefc;
+  --danger: #d93f3f;
+  --success: #1f9d55;
+  --warning: #b7791f;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #0c0d10;
+    --surface: #131418;
+    --subtle: #1b1d22;
+    --line: #262830;
+    --fg: #ecedf0;
+    --muted: #8b8f9c;
+    --accent: #7c7cf0;
+    --accent-hover: #8f8ff5;
+    --accent-soft: #1f1f3a;
+    --danger: #f06363;
+    --success: #3fbf7a;
+    --warning: #e0a84a;
   }
 }
 
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+::selection {
+  background: var(--accent-soft);
 }

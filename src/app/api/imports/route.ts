@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   if (!user) return jsonError("Non authentifié.", 401);
 
   if (await findActiveImport(user.id)) {
-    return jsonError("Un import est déjà en cours. Attends qu'il se termine.", 409);
+    return jsonError("Un import est déjà en cours. Patientez jusqu'à la fin.", 409);
   }
 
   const maxBytes = env.MAX_UPLOAD_MB * 1024 * 1024;
