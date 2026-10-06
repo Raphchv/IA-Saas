@@ -1,0 +1,18 @@
+# Base de données locale pour le développement.
+# Image officielle Postgres + extension pgvector (recherche vectorielle).
+# Lancer : docker compose up -d
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aitoolbox
+      POSTGRES_PASSWORD: aitoolbox
+      POSTGRES_DB: aitoolbox
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

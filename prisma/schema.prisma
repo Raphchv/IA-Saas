@@ -1,0 +1,233 @@
+// Schéma de la base de données AI Toolbox.
+// Après toute modification : npm run db:migrate
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [vector]
+}
+
+// ─────────────────────────────────────────────────────────────
+// Authentification (tables requises par Better Auth)
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions      Session[]
+  accounts      Account[]
+  imports       Import[]
+  conversations Conversation[]
+  messages      Message[]
+  chunks        ConversationChunk[]
+  favorites     Favorite[]
+  tags          Tag[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Données de l'application
+// Chaque table porte un `userId` : toutes les requêtes filtrent dessus,
+// et la suppression d'un utilisateur supprime tout en cascade.
+// ─────────────────────────────────────────────────────────────
+
+/// Origine d'une conversation. Ajouter ici CLAUDE, GEMINI… plus tard.
+enum ConversationSource {
+  CHATGPT
+}
+
+enum ImportStatus {
+  PARSING // analyse du fichier
+  IMPORTING // enregistrement des conversations
+  INDEXING // calcul des embeddings
+  COMPLETED
+  FAILED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+/// Un import = un fichier déposé par l'utilisateur. Le fichier lui-même
+/// n'est jamais conservé : on ne garde que ces métadonnées.
+model Import {
+  id                     String              @id @default(cuid())
+  userId                 String
+  user                   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source                 ConversationSource?
+  fileName               String
+  fileSize               Int
+  status                 ImportStatus        @default(PARSING)
+  totalConversations     Int                 @default(0)
+  importedConversations  Int                 @default(0)
+  skippedConversations   Int                 @default(0)
+  totalChunks            Int                 @default(0)
+  indexedChunks          Int                 @default(0)
+  error                  String?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  completedAt            DateTime?
+
+  conversations Conversation[]
+
+  @@index([userId, createdAt])
+}
+
+model Conversation {
+  id           String             @id @default(cuid())
+  userId       String
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  importId     String?
+  import       Import?            @relation(fields: [importId], references: [id], onDelete: SetNull)
+  source       ConversationSource
+  /// Identifiant de la conversation chez le fournisseur (évite les doublons à la réimportation).
+  externalId   String
+  title        String
+  messageCount Int                @default(0)
+  /// Dates d'origine de la conversation (chez ChatGPT), pas de l'import.
+  startedAt    DateTime?
+  lastActiveAt DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  messages  Message[]
+  chunks    ConversationChunk[]
+  favorite  Favorite?
+  tags      ConversationTag[]
+
+  @@unique([userId, source, externalId])
+  @@index([userId, lastActiveAt])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole
+  content        String
+  /// Ordre du message dans la conversation (0, 1, 2…).
+  position       Int
+  sentAt         DateTime?
+
+  @@index([conversationId, position])
+  @@index([userId])
+}
+
+/// Extrait d'une conversation (quelques messages consécutifs) utilisé pour
+/// la recherche. Une conversation longue est découpée en plusieurs chunks.
+/// - `embedding` : vecteur pour la recherche par le sens (pgvector)
+/// - `searchVector` : index plein texte pour la recherche par mots-clés
+/// Ces deux colonnes sont écrites en SQL brut (voir src/server/indexing.ts).
+/// Pas d'index vectoriel approximatif (HNSW) : la recherche est toujours
+/// filtrée par utilisateur, et un calcul exact reste rapide à cette échelle.
+model ConversationChunk {
+  id             String                       @id @default(cuid())
+  userId         String
+  user           User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationId String
+  conversation   Conversation                 @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  position       Int
+  content        String
+  embedding      Unsupported("vector(1536)")?
+  searchVector   Unsupported("tsvector")?
+
+  @@index([conversationId])
+  @@index([userId])
+  @@index([searchVector], type: Gin)
+}
+
+model Favorite {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationId String       @unique
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// Tags / catégories : préparés pour une prochaine version (pas encore d'interface).
+model Tag {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  color     String?
+  createdAt DateTime @default(now())
+
+  conversations ConversationTag[]
+
+  @@unique([userId, name])
+}
+
+model ConversationTag {
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  tagId          String
+  tag            Tag          @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, tagId])
+}
