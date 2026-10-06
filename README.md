@@ -4,7 +4,15 @@ Le deuxième cerveau pour vos conversations IA : importez votre historique ChatG
 
 MVP entièrement gratuit : pas de paiement, pas d'abonnement.
 
-## Démarrer en local
+## Démarrage facile sur Windows (sans Docker)
+
+1. Installez [Node.js](https://nodejs.org) (bouton « LTS »).
+2. Créez une base de données gratuite sur [Neon](https://neon.tech), puis copiez son adresse (`postgresql://…`).
+3. Double-cliquez sur **`lancer-windows.bat`**. Au premier lancement, il installe tout et vous demande l'adresse Neon (et, en option, votre clé OpenAI). Ensuite, il ouvre le site dans votre navigateur.
+
+Pour arrêter l'application, fermez la fenêtre noire. Pour la relancer, double-cliquez de nouveau sur le fichier.
+
+## Démarrer en local (avec Docker)
 
 Prérequis : [Node.js 22+](https://nodejs.org) et [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
