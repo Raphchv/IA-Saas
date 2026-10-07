@@ -2,14 +2,12 @@
 // Après toute modification : npm run db:migrate
 
 generator client {
-  provider        = "prisma-client"
-  output          = "../src/generated/prisma"
-  previewFeatures = ["postgresqlExtensions"]
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider   = "postgresql"
-  extensions = [vector]
+  provider = "postgresql"
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -98,7 +96,7 @@ enum ConversationSource {
 enum ImportStatus {
   PARSING // analyse du fichier
   IMPORTING // enregistrement des conversations
-  INDEXING // calcul des embeddings
+  INDEXING // construction de l'index de recherche
   COMPLETED
   FAILED
 }
@@ -177,11 +175,8 @@ model Message {
 
 /// Extrait d'une conversation (quelques messages consécutifs) utilisé pour
 /// la recherche. Une conversation longue est découpée en plusieurs chunks.
-/// - `embedding` : vecteur pour la recherche par le sens (pgvector)
-/// - `searchVector` : index plein texte pour la recherche par mots-clés
-/// Ces deux colonnes sont écrites en SQL brut (voir src/server/indexing.ts).
-/// Pas d'index vectoriel approximatif (HNSW) : la recherche est toujours
-/// filtrée par utilisateur, et un calcul exact reste rapide à cette échelle.
+/// - `searchVector` : index plein texte (texte sans accents ni majuscules),
+///   écrit en SQL brut par `buildSearchIndex` (src/server/search/index.ts).
 model ConversationChunk {
   id             String                       @id @default(cuid())
   userId         String
@@ -190,7 +185,6 @@ model ConversationChunk {
   conversation   Conversation                 @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   position       Int
   content        String
-  embedding      Unsupported("vector(1536)")?
   searchVector   Unsupported("tsvector")?
 
   @@index([conversationId])

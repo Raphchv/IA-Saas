@@ -1,5 +1,5 @@
 # Base de données locale pour le développement.
-# Image officielle Postgres + extension pgvector (recherche vectorielle).
+# Image Postgres officielle (variante pgvector, compatible ; l'extension n'est plus utilisée).
 # Lancer : docker compose up -d
 services:
   db:

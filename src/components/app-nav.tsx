@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { LayoutDashboard, LogOut, MessagesSquare, Search, Settings, Sparkles, Star, Upload } from "lucide-react";
+import { LayoutDashboard, LogOut, MessagesSquare, Search, Settings, Star, Upload } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/search", label: "Rechercher", icon: Search },
-  { href: "/ask", label: "Ask my history", icon: Sparkles },
   { href: "/conversations", label: "Conversations", icon: MessagesSquare },
   { href: "/conversations?favorites=1", label: "Favoris", icon: Star },
   { href: "/import", label: "Importer", icon: Upload },

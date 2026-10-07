@@ -1,6 +1,8 @@
 # AI Toolbox
 
-Le deuxième cerveau pour vos conversations IA : importez votre historique ChatGPT, recherchez-y par le sens, et posez-lui des questions (« Ask my history »).
+Le deuxième cerveau pour vos conversations IA : importez votre historique ChatGPT, puis recherchez-y naturellement.
+
+Aucune IA externe ni API payante : la recherche fonctionne entièrement dans l'application.
 
 MVP entièrement gratuit : pas de paiement, pas d'abonnement.
 
@@ -8,7 +10,7 @@ MVP entièrement gratuit : pas de paiement, pas d'abonnement.
 
 1. Installez [Node.js](https://nodejs.org) (bouton « LTS »).
 2. Créez une base de données gratuite sur [Neon](https://neon.tech), puis copiez son adresse (`postgresql://…`).
-3. Double-cliquez sur **`lancer-windows.bat`**. Au premier lancement, il installe tout et vous demande l'adresse Neon (et, en option, votre clé OpenAI). Ensuite, il ouvre le site dans votre navigateur.
+3. Double-cliquez sur **`lancer-windows.bat`**. Au premier lancement, il installe tout et vous demande l'adresse Neon. Ensuite, il ouvre le site dans votre navigateur.
 
 Pour arrêter l'application, fermez la fenêtre noire. Pour la relancer, double-cliquez de nouveau sur le fichier.
 
@@ -24,9 +26,8 @@ npm install
 cp .env.example .env
 #    puis ouvrez .env et remplissez :
 #    - BETTER_AUTH_SECRET : générez-le avec `openssl rand -base64 32`
-#    - OPENAI_API_KEY     : https://platform.openai.com/api-keys
 
-# 3. Lancer la base de données (Postgres + pgvector)
+# 3. Lancer la base de données (Postgres)
 docker compose up -d
 
 # 4. Créer les tables
@@ -37,8 +38,6 @@ npm run dev
 ```
 
 Ouvrez ensuite http://localhost:3000.
-
-Sans clé OpenAI, l'import et la recherche par mots-clés fonctionnent quand même. La recherche par le sens et Ask my history, eux, ont besoin de la clé.
 
 ## Commandes utiles
 
@@ -58,8 +57,8 @@ src/
 │   ├── page.tsx              Landing page publique
 │   ├── privacy/              Page Confidentialité
 │   ├── (auth)/               Connexion / inscription
-│   ├── (app)/                Application connectée (dashboard, import, recherche, ask…)
-│   │   └── actions.ts        Server Actions (favori, suppression, Ask my history)
+│   ├── (app)/                Application connectée (dashboard, import, recherche…)
+│   │   └── actions.ts        Server Actions (favori, suppression)
 │   └── api/
 │       ├── auth/             Routes d'authentification (Better Auth)
 │       └── imports/          Upload du ZIP + suivi de l'avancement
@@ -69,8 +68,11 @@ src/
 │   ├── importers/            Parsers d'export (un fichier par fournisseur)
 │   ├── imports.ts            Pipeline d'import : analyse → stockage → indexation
 │   ├── chunking.ts           Découpage des conversations en extraits
-│   ├── search.ts             Recherche hybride (mots-clés + sens)
-│   ├── ask.ts                Ask my history (RAG)
+│   ├── search/               Moteur de recherche (sans IA)
+│   │   ├── text.ts           Accents, mots vides, pluriels
+│   │   ├── synonyms.ts       Dictionnaire de termes associés (à enrichir)
+│   │   ├── engine.ts         Score de pertinence, extraits, surlignage
+│   │   └── index.ts          Index PostgreSQL + recherche par utilisateur
 │   └── conversations.ts      Accès aux conversations (toujours filtré par utilisateur)
 └── proxy.ts                  Redirection rapide vers /login
 prisma/schema.prisma          Schéma de la base de données
@@ -84,7 +86,7 @@ ZIP (en mémoire, jamais écrit sur disque)
  → détection du format → parser (ChatGPT)
  → format commun NormalizedConversation
  → stockage (Conversation + Message) + découpage en extraits
- → embeddings OpenAI (recherche par le sens) → terminé
+ → index de recherche (texte sans accents) → terminé
 ```
 
 L'import tourne en arrière-plan. La page d'import interroge `/api/imports/[id]` pour afficher la progression.
@@ -96,10 +98,15 @@ L'import tourne en arrière-plan. La page d'import interroge `/api/imports/[id]`
 3. L'ajouter au tableau `parsers` dans `src/server/importers/index.ts`.
 4. Ajouter son nom dans `SOURCE_LABELS` (`src/lib/format.ts`).
 
-### Recherche et Ask my history
+### Le moteur de recherche (sans IA)
 
-- **Recherche** : on combine l'index plein texte de Postgres (les mots exacts) et la similarité entre embeddings, via pgvector (le sens). Les deux classements sont fusionnés.
-- **Ask my history** : on cherche les extraits les plus pertinents, puis on les transmet à l'IA avec la consigne de répondre *uniquement* à partir de ces extraits, en citant ses sources. Si rien de pertinent n'est trouvé, on répond « Je n'ai pas trouvé suffisamment d'informations dans votre historique. » sans même appeler l'IA.
+1. **Analyse de la recherche** : on retire les mots vides (« mes », « les conversations où je parle de »…). Les accents, majuscules et pluriels sont ignorés (« idées » trouve « idée »).
+2. **Termes associés** : `src/server/search/synonyms.ts` associe des mots (« saas » → startup, business…). Ils améliorent le classement, mais un terme associé isolé ne fait jamais apparaître une conversation : il faut un mot de la recherche, ou au moins deux indices différents.
+3. **Candidats** : l'index plein texte de PostgreSQL trouve rapidement les extraits qui contiennent ces mots, uniquement parmi ceux de l'utilisateur connecté.
+4. **Score** : un mot dans le titre compte plus que dans le texte, contenir tous les mots est récompensé, et les mots qui se suivent donnent un bonus.
+5. **Affichage** : classement, indicateur de pertinence, extrait centré sur le passage trouvé et mots surlignés (aussi dans la conversation ouverte).
+
+Pour améliorer les résultats d'un domaine, enrichissez `synonyms.ts`, puis vérifiez avec `npm test`.
 
 ## Sécurité et confidentialité
 

@@ -158,8 +158,8 @@ export function ImportUploader({ maxUploadMb, activeImportId }: { maxUploadMb: n
         </div>
         {data.error && <Alert tone="warning">{data.error}</Alert>}
         <div className="flex flex-wrap justify-center gap-2">
-          <Link href="/search" className={buttonClass("secondary")}>Rechercher</Link>
-          <Link href="/ask" className={buttonClass("primary")}>Ask my history</Link>
+          <Link href="/conversations" className={buttonClass("secondary")}>Voir mes conversations</Link>
+          <Link href="/search" className={buttonClass("primary")}>Rechercher dans mon historique</Link>
         </div>
       </Card>
     );

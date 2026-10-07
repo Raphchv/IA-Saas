@@ -1,15 +1,14 @@
 import "server-only";
 import type { ConversationSource } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
-import { embed, isAiEnabled, toPgVector } from "@/server/ai";
 import { chunkConversation } from "@/server/chunking";
 import { ImportError, parseArchive, type NormalizedConversation } from "@/server/importers";
+import { buildSearchIndex } from "@/server/search";
 
 /** Un import sans nouvelle depuis ce délai est considéré comme interrompu
  *  (ex : serveur redémarré pendant le traitement). */
 const STALE_AFTER_MS = 15 * 60 * 1000;
 const IN_PROGRESS = ["PARSING", "IMPORTING", "INDEXING"] as const;
-const EMBEDDING_PAGE_SIZE = 200;
 
 // ─── Lecture ─────────────────────────────────────────────────
 
@@ -79,22 +78,15 @@ export async function processImport(importId: string, userId: string, zip: Uint8
       }
     }
 
-    // 3. Indexation (embeddings) : un échec ici ne fait pas perdre l'import.
-    let warning: string | null = null;
-    if (isAiEnabled) {
-      await db.import.update({ where: { id: importId }, data: { status: "INDEXING" } });
-      try {
-        await indexPendingChunks(userId, importId);
-      } catch (error) {
-        console.error(`[import ${importId}] indexation échouée`, error);
-        warning =
-          "Vos conversations sont importées, mais la recherche intelligente n'a pas pu être préparée. La recherche par mots-clés fonctionne.";
-      }
-    }
+    // 3. Indexation : construit l'index de recherche des nouveaux extraits.
+    await db.import.update({ where: { id: importId }, data: { status: "INDEXING" } });
+    await buildSearchIndex(userId, async (done, total) => {
+      await db.import.update({ where: { id: importId }, data: { indexedChunks: done, totalChunks: total } });
+    });
 
     await db.import.update({
       where: { id: importId },
-      data: { status: "COMPLETED", completedAt: new Date(), error: warning },
+      data: { status: "COMPLETED", completedAt: new Date(), error: null },
     });
   } catch (error) {
     if (!(error instanceof ImportError)) console.error(`[import ${importId}] échec`, error);
@@ -158,38 +150,9 @@ async function saveConversation(
         sentAt: message.sentAt,
       })),
     });
+    // L'index de recherche de ces extraits est construit à l'étape "Indexation".
     await tx.conversationChunk.createMany({
       data: chunks.map((content, position) => ({ userId, conversationId, position, content })),
     });
-    // Index plein texte (colonne gérée en SQL, voir schema.prisma).
-    await tx.$executeRaw`
-      UPDATE "ConversationChunk" SET "searchVector" = to_tsvector('simple', content)
-      WHERE "conversationId" = ${conversationId} AND "userId" = ${userId}`;
   }, { timeout: 30_000 });
-}
-
-/** Calcule les embeddings de tous les extraits de l'utilisateur qui n'en ont pas encore. */
-async function indexPendingChunks(userId: string, importId: string) {
-  const [{ count }] = await db.$queryRaw<{ count: number }[]>`
-    SELECT COUNT(*)::int AS count FROM "ConversationChunk"
-    WHERE "userId" = ${userId} AND embedding IS NULL`;
-  await db.import.update({ where: { id: importId }, data: { totalChunks: count, indexedChunks: 0 } });
-
-  let indexed = 0;
-  while (true) {
-    const page = await db.$queryRaw<{ id: string; content: string }[]>`
-      SELECT id, content FROM "ConversationChunk"
-      WHERE "userId" = ${userId} AND embedding IS NULL
-      ORDER BY id LIMIT ${EMBEDDING_PAGE_SIZE}`;
-    if (page.length === 0) break;
-
-    const vectors = await embed(page.map((chunk) => chunk.content));
-    await db.$executeRaw`
-      UPDATE "ConversationChunk" AS c SET embedding = v.embedding::vector
-      FROM unnest(${page.map((chunk) => chunk.id)}::text[], ${vectors.map(toPgVector)}::text[]) AS v(id, embedding)
-      WHERE c.id = v.id AND c."userId" = ${userId}`;
-
-    indexed += page.length;
-    await db.import.update({ where: { id: importId }, data: { indexedChunks: indexed } });
-  }
 }

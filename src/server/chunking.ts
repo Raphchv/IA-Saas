@@ -1,10 +1,9 @@
 /**
  * Découpe une conversation en extraits ("chunks") pour la recherche.
  *
- * Pourquoi découper ? Un embedding résume le sens d'un texte : sur une
- * conversation de 200 messages, le sens serait trop dilué. Des extraits de
- * quelques messages permettent de retrouver le passage précis qui répond
- * à une question.
+ * Pourquoi découper ? Sur une conversation de 200 messages, on veut retrouver
+ * et afficher le passage précis qui correspond à la recherche, pas toute la
+ * conversation. Chaque extrait regroupe quelques messages consécutifs.
  */
 
 /** Taille visée d'un extrait, en caractères (~300 à 500 tokens). */

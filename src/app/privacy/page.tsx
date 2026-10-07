@@ -30,8 +30,8 @@ export default async function PrivacyPage() {
                 de l&apos;IA.
               </li>
               <li>
-                <strong className="text-fg">Un index de recherche</strong> : des extraits de ces conversations et leur représentation
-                numérique (« embeddings »), qui permettent la recherche par le sens.
+                <strong className="text-fg">Un index de recherche</strong> : des extraits de ces conversations, préparés pour
+                que la recherche soit rapide.
               </li>
               <li><strong className="text-fg">Vos favoris</strong> et un historique de vos imports (nom et taille du fichier, nombre de conversations).</li>
             </ul>
@@ -55,13 +55,8 @@ export default async function PrivacyPage() {
             <ul>
               <li>Vos conversations ne sont accessibles qu&apos;à votre compte. Elles ne sont ni partagées, ni vendues, ni publiées.</li>
               <li>
-                Pour la recherche intelligente et Ask my history, des extraits de vos conversations sont envoyés à
-                l&apos;API d&apos;OpenAI, notre fournisseur d&apos;IA, uniquement pour calculer les embeddings et rédiger les réponses.
-                Selon les{" "}
-                <a href="https://openai.com/enterprise-privacy/" className="text-accent hover:underline" target="_blank" rel="noreferrer">
-                  conditions d&apos;OpenAI pour son API
-                </a>
-                , ces données ne servent pas à entraîner leurs modèles.
+                Aucun service d&apos;intelligence artificielle externe n&apos;est utilisé : la recherche fonctionne
+                entièrement dans AI Toolbox, et vos conversations ne sont transmises à aucun tiers.
               </li>
             </ul>
           </section>

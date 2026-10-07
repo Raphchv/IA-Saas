@@ -19,5 +19,5 @@ export const config = {
   // Uniquement les pages de l'application. Les routes /api ne passent pas par
   // le proxy (elles vérifient la session elles-mêmes) : cela évite aussi que
   // le proxy mette en mémoire tampon les gros fichiers uploadés.
-  matcher: ["/dashboard/:path*", "/import/:path*", "/conversations/:path*", "/search/:path*", "/ask/:path*", "/settings/:path*"],
+  matcher: ["/dashboard/:path*", "/import/:path*", "/conversations/:path*", "/search/:path*", "/settings/:path*"],
 };

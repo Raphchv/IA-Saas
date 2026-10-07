@@ -17,6 +17,10 @@ const listItemSelect = {
   favorite: { select: { id: true } },
 } as const;
 
+export async function countConversations(userId: string) {
+  return db.conversation.count({ where: { userId } });
+}
+
 export async function getDashboardData(userId: string) {
   const [totalConversations, totalMessages, totalFavorites, lastImport, recent, favorites] = await Promise.all([
     db.conversation.count({ where: { userId } }),

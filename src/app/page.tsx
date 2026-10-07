@@ -8,6 +8,7 @@ import {
   MessagesSquare,
   Search,
   Sparkles,
+  Star,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -29,8 +30,8 @@ const FAQ = [
     a: "Dans ChatGPT : Paramètres → Gestion des données → Exporter les données. Vous recevez un fichier .zip par email, qu'il suffit de déposer dans AI Toolbox.",
   },
   {
-    q: "L'IA peut-elle inventer des réponses ?",
-    a: "Ask my history répond uniquement à partir de vos conversations et affiche toujours ses sources. Si votre historique ne contient pas la réponse, il vous le dit.",
+    q: "Mes conversations sont-elles envoyées à une IA ?",
+    a: "Non. La recherche fonctionne entièrement dans AI Toolbox, sans aucun service d'IA externe : vos conversations ne sont transmises à personne.",
   },
   {
     q: "Puis-je supprimer mes données ?",
@@ -92,7 +93,7 @@ export default async function LandingPage() {
             {[
               { icon: FileArchive, title: "Exportez", text: "Demandez l'export de vos données dans les paramètres de ChatGPT." },
               { icon: Upload, title: "Importez", text: "Déposez le fichier .zip : vos conversations sont analysées et indexées." },
-              { icon: Sparkles, title: "Retrouvez", text: "Recherchez, ou posez directement vos questions à votre historique." },
+              { icon: Search, title: "Retrouvez", text: "Recherchez naturellement dans tout votre historique, en quelques secondes." },
             ].map((step, i) => (
               <li key={step.title} className="rounded-xl border border-line bg-surface p-5 shadow-sm">
                 <span className="text-xs font-medium text-accent">Étape {i + 1}</span>
@@ -108,8 +109,9 @@ export default async function LandingPage() {
         <Section id="recherche" eyebrow="Recherche intelligente" title="Cherchez une idée, pas un mot exact.">
           <div className="grid items-center gap-8 md:grid-cols-2">
             <p className="text-muted">
-              AI Toolbox comprend le sens de votre recherche. Tapez « mes idées de SaaS » et retrouvez la conversation où
-              vous parliez d&apos;un « projet de startup », même si les mots ne correspondent pas.
+              Écrivez comme vous parlez. AI Toolbox ignore les mots inutiles, ne se soucie ni des accents ni des pluriels,
+              et connaît les termes associés : tapez « mes idées de SaaS » et retrouvez aussi la conversation où vous
+              parliez d&apos;un « projet de startup ».
             </p>
             <div className="space-y-2 rounded-xl border border-line bg-surface p-4 shadow-sm">
               <div className="flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm">
@@ -126,29 +128,28 @@ export default async function LandingPage() {
           </div>
         </Section>
 
-        {/* 4. Ask my history */}
-        <Section id="ask" eyebrow="Ask my history" title="Posez une question à tout votre historique.">
+        {/* 4. Des résultats clairs */}
+        <Section id="resultats" eyebrow="Des résultats clairs" title="Le bon passage, tout de suite.">
           <div className="grid items-center gap-8 md:grid-cols-2">
-            <div className="order-2 space-y-3 rounded-xl border border-line bg-surface p-4 text-sm shadow-sm md:order-1">
-              <p className="rounded-lg bg-accent-soft px-3 py-2">Quelles idées de SaaS ai-je abandonnées et pourquoi ?</p>
-              <p className="leading-relaxed">
-                Vous avez mis de côté l&apos;application de fitness, jugée trop concurrentielle{" "}
-                <Cite n={1} />, et l&apos;outil pour freelances, faute de temps pour le développer <Cite n={2} />.
-              </p>
-              <div className="space-y-1 border-t border-line pt-3 text-xs text-muted">
-                <p><Cite n={1} /> Business plan application fitness · mars 2025</p>
-                <p><Cite n={2} /> Projet de startup pour les freelances · juin 2025</p>
+            <div className="order-2 rounded-xl border border-line bg-surface p-4 text-sm shadow-sm md:order-1">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium">Business plan application <Mark>fitness</Mark></p>
+                  <p className="mt-1 text-xs text-muted">12 mars 2025 · <span className="text-success">Très pertinent</span></p>
+                </div>
+                <Star className="size-4 fill-amber-400 text-amber-400" />
               </div>
+              <p className="mt-2.5 leading-relaxed text-muted">
+                … Moi : J&apos;ai une <Mark>idée</Mark> de <Mark>SaaS</Mark> : une application de <Mark>fitness</Mark>{" "}
+                avec un coach personnalisé. IA : Le marché est très concurrentiel…
+              </p>
             </div>
             <div className="order-1 space-y-3 text-muted md:order-2">
               <p>
-                AI Toolbox retrouve les passages pertinents de vos conversations et en tire une réponse claire, avec les
-                sources pour vérifier.
+                Les conversations sont classées de la plus pertinente à la moins pertinente, avec l&apos;extrait qui
+                correspond et vos mots <strong className="text-fg">surlignés</strong>.
               </p>
-              <p>
-                Il ne répond <strong className="text-fg">qu&apos;à partir de vos propres conversations</strong>. Si
-                l&apos;information n&apos;y est pas, il vous le dit plutôt que d&apos;inventer.
-              </p>
+              <p>Ouvrez la conversation complète en un clic, et gardez les plus importantes en favoris.</p>
             </div>
           </div>
         </Section>
@@ -162,8 +163,8 @@ export default async function LandingPage() {
             <Feature icon={FileArchive} title="Archive non conservée">
               Le fichier .zip est lu en mémoire puis oublié : il n&apos;est jamais stocké.
             </Feature>
-            <Feature icon={Database} title="Le strict nécessaire">
-              Seul le texte de vos conversations est conservé ; images et audios sont ignorés.
+            <Feature icon={Database} title="Aucune IA externe">
+              La recherche fonctionne sans envoyer vos conversations à ChatGPT ni à aucun autre service.
             </Feature>
             <Feature icon={Trash2} title="Suppression en un clic">
               Supprimez une conversation, toutes vos données ou votre compte à tout moment.
@@ -223,27 +224,29 @@ function Feature({ icon: Icon, title, children }: { icon: React.ElementType; tit
   );
 }
 
-function Cite({ n }: { n: number }) {
-  return <span className="rounded bg-accent-soft px-1 text-xs font-medium text-accent">{n}</span>;
+function Mark({ children }: { children: React.ReactNode }) {
+  return <mark className="rounded-sm bg-amber-200/70 px-0.5 text-fg dark:bg-amber-400/30">{children}</mark>;
 }
 
 /** Aperçu stylisé de l'application (HTML pur, pas d'image). */
 function HeroPreview() {
+  const results = [
+    { title: <>Brainstorm <Mark>nom</Mark> de marque</>, meta: "Très pertinent", snippet: <>… on garde « Nova » comme <Mark>nom</Mark> du <Mark>projet</Mark>, simple et facile à retenir…</> },
+    { title: <>Vérification des <Mark>noms</Mark> disponibles</>, meta: "Pertinent", snippet: <>… « Brainly » est déjà utilisé, il faut trouver un autre <Mark>nom</Mark>…</> },
+  ];
   return (
     <div className="mx-auto mt-16 max-w-3xl rounded-2xl border border-line bg-surface p-2 text-left shadow-xl shadow-black/5">
       <div className="rounded-xl border border-line bg-bg p-4 sm:p-6">
         <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2.5 text-sm shadow-sm">
-          <Sparkles className="size-4 text-accent" />
-          <span>Qu&apos;avais-je décidé pour le nom de mon projet ?</span>
+          <Search className="size-4 text-muted" />
+          <span>le nom de mon projet</span>
         </div>
-        <p className="mt-4 text-sm leading-relaxed">
-          Vous aviez retenu « Nova » pour sa simplicité <Cite n={1} />, après avoir écarté « Brainly », déjà utilisé{" "}
-          <Cite n={2} />.
-        </p>
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          {["Brainstorm nom de marque", "Vérification des noms disponibles"].map((title, i) => (
-            <div key={title} className="rounded-lg border border-line bg-surface px-3 py-2 text-xs">
-              <Cite n={i + 1} /> <span className="ml-1">{title}</span>
+        <div className="mt-4 space-y-2">
+          {results.map((result, i) => (
+            <div key={i} className="rounded-lg border border-line bg-surface px-3 py-2.5 text-sm">
+              <p className="font-medium">{result.title}</p>
+              <p className="mt-0.5 text-xs text-accent">{result.meta}</p>
+              <p className="mt-1 text-xs text-muted">{result.snippet}</p>
             </div>
           ))}
         </div>

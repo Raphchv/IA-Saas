@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Sparkles, Upload } from "lucide-react";
+import { ArrowRight, Search, Upload } from "lucide-react";
 import { ConversationList, EmptyState, toListItem } from "@/components/conversation-list";
 import { SearchBar } from "@/components/search-bar";
 import { buttonClass, Card } from "@/components/ui";
@@ -26,8 +26,8 @@ export default async function DashboardPage() {
           <Link href="/import" className={buttonClass("secondary", "md", "whitespace-nowrap")}>
             <Upload className="size-4" /> Importer<span className="hidden sm:inline"> mon historique</span>
           </Link>
-          <Link href="/ask" className={buttonClass("primary", "md", "whitespace-nowrap")}>
-            <Sparkles className="size-4" /> Ask my history
+          <Link href="/search" className={buttonClass("primary", "md", "whitespace-nowrap")}>
+            <Search className="size-4" /> Rechercher<span className="hidden sm:inline"> dans mon historique</span>
           </Link>
         </div>
       </header>

@@ -12,6 +12,10 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  async redirects() {
+    // "Ask my history" a été remplacé par la recherche (le paramètre ?q= est conservé).
+    return [{ source: "/ask", destination: "/search", permanent: false }];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
